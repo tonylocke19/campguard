@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#111">
+<title>Camp-Guard</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font-family: system-ui, sans-serif; background:#111; color:#eee; min-height:100vh; }
+  #menu { padding:20px; max-width:560px; margin:0 auto; }
+  h1 { font-size:1.6rem; margin:0 0 4px; }
+  p.sub { color:#9aa; margin:0 0 20px; }
+  .card { display:block; width:100%; text-align:left; background:#1d2328; color:#eee; border:2px solid #2c353c; border-radius:16px; padding:16px; margin-bottom:12px; font-size:1.05rem; }
+  .card small { display:block; color:#9aa; margin-top:4px; font-size:.85rem; }
+  .card.sel { border-color:#4da3ff; background:#1a2a3a; }
+  label { display:block; margin:16px 0 6px; }
+  input[type=range], select { width:100%; font-size:1rem; padding:8px; }
+  .row { display:flex; align-items:center; gap:12px; margin-top:16px; background:#1d2328; border:2px solid #2c353c; border-radius:16px; padding:14px; }
+  .row input[type=checkbox] { width:26px; height:26px; flex:none; }
+  .row small { display:block; color:#9aa; font-size:.8rem; }
+  #start { width:100%; padding:20px; font-size:1.3rem; font-weight:bold; border:0; border-radius:16px; background:#2e9e5b; color:#fff; margin-top:20px; }
+  #hint { font-size:.85rem; color:#9aa; margin-top:14px; line-height:1.4; }
+  #stage { position:fixed; inset:0; display:none; z-index:10; }
+  #info { position:absolute; bottom:12px; left:0; right:0; text-align:center; color:rgba(255,255,255,.15); font-size:.8rem; pointer-events:none; }
+  #flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
+</style>
+</head>
+<body>
+<div id="menu">
+  <h1>🏕️ Camp-Guard</h1>
+  <p class="sub">Wähle ein Szenario. Das Handy simuliert einen bewohnten Camper.</p>
+  <div id="cards"></div>
+  <label>Lautstärke: <span id="volv">30</span>%</label>
+  <input type="range" id="vol" min="5" max="100" value="30">
+  <label>Automatisch beenden nach</label>
+  <select id="timer">
+    <option value="0">Nie (manuell beenden)</option>
+    <option value="60">1 Stunde</option>
+    <option value="120">2 Stunden</option>
+    <option value="240" selected>4 Stunden</option>
+    <option value="480">8 Stunden</option>
+  </select>
+  <div class="row">
+    <input type="checkbox" id="guard" checked>
+    <div><b>Bewegungsalarm</b><small>Bei Erschütterung rufen Stimmen und ein Hund. Das Handy dazu fest ablegen oder anlehnen.</small></div>
+  </div>
+  <label>Empfindlichkeit</label>
+  <select id="sens">
+    <option value="22">Niedrig (nur kräftiges Rütteln)</option>
+    <option value="14" selected>Mittel</option>
+    <option value="8">Hoch (schon leichte Erschütterung)</option>
+  </select>
+  <div class="row">
+    <input type="checkbox" id="alarmLoud">
+    <div><b>Alarm extra laut</b><small>Alarm läuft mit voller Lautstärke, unabhängig vom Regler.</small></div>
+  </div>
+  <button id="start">▶ Start</button>
+  <div id="hint">Tipps: Ladekabel anschließen. Display zur Scheibe drehen. Beenden: Bildschirm 2 Sekunden lang gedrückt halten. Der Bewegungsalarm braucht auf iPhones eine einmalige Erlaubnis beim Start.</div>
+</div>
+<div id="stage"><div id="flash"></div><div id="info">Zum Beenden lange drücken</div></div>
+
+<script>
+const scenarios = [
+ { id:'tv', name:'📺 Fernsehabend', desc:'Flackerndes TV-Licht, Filmgeräusche, Kommentare',
+   light:'tv',
+   lines:[['a','Oh, die Szene ist gut.'],['b','Reich mir mal die Chips rüber.'],['a','Pssst, gleich kommt der Twist.'],['b','Hahaha, das habe ich kommen sehen!'],['a','Mach mal ein bisschen leiser, die Nachbarn.'],['b','Wer ist eigentlich der Typ da?'],['a','Das ist der Bruder von dem anderen.'],['b','Ach so, jetzt verstehe ich es.']] },
+ { id:'candle', name:'🕯️ Kerzenlicht-Gespräch', desc:'Warmes, atmendes Licht, leises Gespräch zu zweit',
+   light:'candle',
+   lines:[['a','Weißt du noch, als wir in Portugal waren?'],['b','Klar, der Sturm in der Nacht.'],['a','Das Zelt hat so gewackelt!'],['b','Und wir haben trotzdem Tee gekocht.'],['a','Morgen sollten wir früh los, oder?'],['b','Ja, aber erst Kaffee.'],['a','Noch Wein?'],['b','Gern, ein kleines Glas.']] },
+ { id:'book', name:'📖 Hörbuch im Bett', desc:'Dunkles Leselicht, ruhige Geschichte wird erzählt',
+   light:'lamp',
+   lines:[['a','Kapitel drei. Es war ein kalter Morgen, als der alte Fischer sein Boot zum Wasser schob.'],['a','Der Nebel hing tief über dem See, und kein Laut war zu hören außer dem Plätschern der Ruder.'],['a','Er dachte an seine Tochter, die im Frühling heiraten würde.'],['a','Plötzlich zog etwas am Netz, schwer und lebendig.'],['a','Er stemmte sich dagegen, doch das Boot begann sich zu drehen.']] },
+ { id:'cards', name:'🃏 Kartenspiel', desc:'Helles Lampenlicht, Spielgeräusche, Lachen',
+   light:'lamp2',
+   lines:[['a','Ich gehe mit.'],['b','Das glaube ich nicht, du bluffst!'],['a','Abwarten. Karten auf den Tisch.'],['b','Oh nein, schon wieder verloren!'],['a','Noch eine Runde?'],['b','Aber diesmal mische ich.'],['a','Du schummelst doch immer.'],['b','Hahaha, gar nicht wahr.']] },
+ { id:'night', name:'🔦 Nachtlektüre', desc:'Wanderndes, schwaches Taschenlampenlicht, Flüstern',
+   light:'torch',
+   lines:[['a','Hast du das gehört?'],['b','Nur der Wind, schlaf weiter.'],['a','Wo ist die Wasserflasche?'],['b','Neben dem Rucksack.'],['a','Danke. Gute Nacht.'],['b','Gute Nacht.']] }
+];
+
+// Alarm-Rufe bei Bewegung: Stimmen in Eskalationsstufen
+const alarmLines = [
+  [['a','Hallo? Wer ist da?']],
+  [['a','Hey! Wer ist da draußen?'],['b','Ich rufe die Polizei!']],
+  [['a','Verschwinden Sie sofort!'],['b','Wir haben Sie gesehen, ich rufe jetzt die Polizei!']]
+];
+
+let selected = scenarios[0], running = false, wake = null, timers = [], raf = null, audioCtx = null, noiseNode = null, endAt = 0;
+let alarmActive = false, alarmLevel = 0, lastAlarm = 0, motionOn = false, armedAt = 0, baseLevel = 0.3;
+const cards = document.getElementById('cards');
+scenarios.forEach(s => {
+  const b = document.createElement('button');
+  b.className = 'card' + (s === selected ? ' sel' : '');
+  b.innerHTML = s.name + '<small>' + s.desc + '</small>';
+  b.onclick = () => { selected = s; [...cards.children].forEach(c => c.classList.remove('sel')); b.classList.add('sel'); };
+  cards.appendChild(b);
+});
+const vol = document.getElementById('vol');
+vol.oninput = () => document.getElementById('volv').textContent = vol.value;
+
+// Lichtmuster: gibt eine CSS-Farbe pro Zeitpunkt zurück
+function lightColor(kind, t) {
+  const r = Math.random;
+  if (kind === 'tv') {
+    const scene = Math.floor(t / 4000) % 5;
+    const base = [[40,70,140],[120,130,160],[30,40,70],[150,110,80],[60,100,60]][scene];
+    const f = 0.55 + r() * 0.45;
+    return `rgb(${base[0]*f|0},${base[1]*f|0},${base[2]*f|0})`;
+  }
+  if (kind === 'candle') {
+    const f = 0.7 + 0.2 * Math.sin(t / 380) + r() * 0.1;
+    return `rgb(${255*f|0},${140*f|0},${40*f|0})`;
+  }
+  if (kind === 'lamp') {
+    const f = 0.55 + 0.05 * Math.sin(t / 6000);
+    return `rgb(${255*f|0},${200*f|0},${120*f|0})`;
+  }
+  if (kind === 'lamp2') {
+    const f = 0.9 + 0.05 * Math.sin(t / 5000);
+    return `rgb(${255*f|0},${225*f|0},${170*f|0})`;
+  }
+  if (kind === 'torch') {
+    const on = (Math.floor(t / 7000) % 3) !== 2;
+    const f = on ? 0.35 + 0.1 * Math.sin(t / 900) + r() * 0.05 : 0.02;
+    return `rgb(${240*f|0},${240*f|0},${255*f|0})`;
+  }
+  return '#000';
+}
+
+// Leises Hintergrundrauschen (wie ferne Stimmen oder Fernsehton)
+function startNoise(level) {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const len = audioCtx.sampleRate * 2;
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < len; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3; }
+  noiseNode = audioCtx.createBufferSource();
+  noiseNode.buffer = buf; noiseNode.loop = true;
+  const g = audioCtx.createGain(); g.gain.value = level * 0.15;
+  noiseNode.connect(g).connect(audioCtx.destination);
+  noiseNode.start();
+}
+
+function speak(text, who, level, rate, pitchBoost) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'de-DE';
+  u.volume = level;
+  u.rate = rate || (0.9 + Math.random() * 0.15);
+  u.pitch = (who === 'a' ? 0.8 : 1.3) + (pitchBoost || 0);
+  const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('de'));
+  if (voices.length) u.voice = voices[who === 'a' ? 0 : Math.min(1, voices.length - 1)];
+  speechSynthesis.speak(u);
+}
+
+function dialogLoop(s) {
+  if (!running) return;
+  const bookMode = s.id === 'book';
+  let i = bookMode ? 0 : Math.floor(Math.random() * s.lines.length);
+  const next = () => {
+    if (!running) return;
+    if (!alarmActive) {
+      const [who, text] = s.lines[i % s.lines.length];
+      speak(text, who, baseLevel);
+      i = bookMode ? i + 1 : Math.floor(Math.random() * s.lines.length);
+    }
+    const pause = bookMode ? 8000 + Math.random() * 8000 : 6000 + Math.random() * 20000;
+    timers.push(setTimeout(next, pause));
+  };
+  timers.push(setTimeout(next, 3000));
+}
+
+// ---------- Bewegungsalarm ----------
+
+// Hundebellen per Synthese: kurze, tiefe, raue Impulse
+function bark(level, delay) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime + delay;
+  const osc = audioCtx.createOscillator();
+  const osc2 = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  const filt = audioCtx.createBiquadFilter();
+  osc.type = 'sawtooth'; osc2.type = 'square';
+  osc.frequency.setValueAtTime(420, t);
+  osc.frequency.exponentialRampToValueAtTime(190, t + 0.18);
+  osc2.frequency.setValueAtTime(210, t);
+  osc2.frequency.exponentialRampToValueAtTime(95, t + 0.18);
+  filt.type = 'bandpass'; filt.frequency.value = 900; filt.Q.value = 0.8;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(level, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+  osc.connect(filt); osc2.connect(filt); filt.connect(g).connect(audioCtx.destination);
+  osc.start(t); osc2.start(t); osc.stop(t + 0.25); osc2.stop(t + 0.25);
+}
+
+function barkSeries(level, count) {
+  let d = 0;
+  for (let i = 0; i < count; i++) { bark(level, d); d += 0.28 + Math.random() * 0.25; }
+}
+
+// Kurzer heller Lichtblitz, als ginge die Lampe an
+function lightFlash() {
+  const f = document.getElementById('flash');
+  f.style.transition = 'none'; f.style.opacity = '0.95';
+  requestAnimationFrame(() => { f.style.transition = 'opacity 2.5s ease-out'; f.style.opacity = '0'; });
+}
+
+function triggerAlarm() {
+  const now = Date.now();
+  if (!running || alarmActive || now - lastAlarm < 25000) return;
+  lastAlarm = now;
+  alarmActive = true;
+  const loud = document.getElementById('alarmLoud').checked;
+  const level = loud ? 1 : Math.min(1, baseLevel + 0.4);
+  // Stufe steigt bei wiederholter Auslösung innerhalb von 3 Minuten
+  alarmLevel = (now - (triggerAlarm.last || 0) < 180000) ? Math.min(alarmLevel + 1, alarmLines.length - 1) : 0;
+  triggerAlarm.last = now;
+  speechSynthesis.cancel();
+  lightFlash();
+  barkSeries(level, 4 + alarmLevel * 2);
+  const lines = alarmLines[alarmLevel];
+  let delay = 1200;
+  lines.forEach(([who, text]) => {
+    timers.push(setTimeout(() => { if (running) speak(text, who, level, 1.05, 0.1); }, delay));
+    delay += 3200;
+  });
+  timers.push(setTimeout(() => barkSeries(level, 3), delay));
+  timers.push(setTimeout(() => { alarmActive = false; }, delay + 4000));
+}
+
+function onMotion(e) {
+  if (!running || !motionOn || Date.now() < armedAt) return;
+  const a = e.accelerationIncludingGravity || e.acceleration;
+  if (!a) return;
+  // Abweichung von der Ruhelage (Gravitation ca. 9.8)
+  const mag = Math.sqrt((a.x||0)**2 + (a.y||0)**2 + (a.z||0)**2);
+  onMotion.prev = onMotion.prev ?? mag;
+  const delta = Math.abs(mag - onMotion.prev);
+  onMotion.prev = mag * 0.2 + onMotion.prev * 0.8;
+  const threshold = parseFloat(document.getElementById('sens').value) / 10;
+  if (delta > threshold) triggerAlarm();
+}
+
+async function enableMotion() {
+  if (!document.getElementById('guard').checked) return false;
+  try {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      const res = await DeviceMotionEvent.requestPermission();
+      if (res !== 'granted') return false;
+    }
+    window.addEventListener('devicemotion', onMotion);
+    return true;
+  } catch (e) { return false; }
+}
+
+async function start() {
+  running = true;
+  baseLevel = vol.value / 100;
+  const stage = document.getElementById('stage');
+  stage.style.display = 'block';
+  document.getElementById('menu').style.display = 'none';
+  const mins = parseInt(document.getElementById('timer').value);
+  endAt = mins ? Date.now() + mins * 60000 : 0;
+  // Bewegungssensor zuerst anfragen (iPhone braucht Fingertipp)
+  motionOn = await enableMotion();
+  // Scharfschaltung nach 20 Sekunden, damit das Ablegen des Handys nicht auslöst
+  armedAt = Date.now() + 20000;
+  onMotion.prev = null; lastAlarm = 0; alarmActive = false;
+  document.getElementById('info').textContent = motionOn
+    ? 'Bewegungsalarm scharf in 20 Sekunden. Zum Beenden lange drücken.'
+    : 'Zum Beenden lange drücken';
+  try { if (stage.requestFullscreen) await stage.requestFullscreen(); } catch (e) {}
+  try { wake = await navigator.wakeLock.request('screen'); } catch (e) {}
+  startNoise(baseLevel);
+  dialogLoop(selected);
+  const t0 = performance.now();
+  let lastUpdate = 0;
+  const frame = (now) => {
+    if (!running) return;
+    if (endAt && Date.now() > endAt) { stop(); return; }
+    const interval = selected.light === 'tv' ? 90 : selected.light === 'candle' ? 120 : 500;
+    if (now - lastUpdate > interval) {
+      stage.style.background = lightColor(selected.light, now - t0);
+      lastUpdate = now;
+    }
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
+}
+
+function stop() {
+  running = false; motionOn = false; alarmActive = false;
+  window.removeEventListener('devicemotion', onMotion);
+  timers.forEach(clearTimeout); timers = [];
+  cancelAnimationFrame(raf);
+  speechSynthesis.cancel();
+  if (noiseNode) try { noiseNode.stop(); } catch (e) {}
+  if (audioCtx) audioCtx.close();
+  if (wake) wake.release();
+  if (document.fullscreenElement) document.exitFullscreen();
+  document.getElementById('stage').style.display = 'none';
+  document.getElementById('menu').style.display = 'block';
+}
+
+document.getElementById('start').onclick = start;
+
+// Langes Drücken (2 Sekunden) beendet
+let pressTimer;
+const st = document.getElementById('stage');
+const down = () => { pressTimer = setTimeout(stop, 2000); };
+const up = () => clearTimeout(pressTimer);
+st.addEventListener('touchstart', down); st.addEventListener('touchend', up);
+st.addEventListener('mousedown', down); st.addEventListener('mouseup', up);
+
+speechSynthesis.getVoices();
+</script>
+</body>
+</html>
