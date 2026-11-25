@@ -3,318 +3,317 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#111">
 <title>Camp-Guard</title>
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin:0; font-family: system-ui, sans-serif; background:#111; color:#eee; min-height:100vh; }
-  #menu { padding:20px; max-width:560px; margin:0 auto; }
-  h1 { font-size:1.6rem; margin:0 0 4px; }
-  p.sub { color:#9aa; margin:0 0 20px; }
-  .card { display:block; width:100%; text-align:left; background:#1d2328; color:#eee; border:2px solid #2c353c; border-radius:16px; padding:16px; margin-bottom:12px; font-size:1.05rem; }
-  .card small { display:block; color:#9aa; margin-top:4px; font-size:.85rem; }
-  .card.sel { border-color:#4da3ff; background:#1a2a3a; }
-  label { display:block; margin:16px 0 6px; }
-  input[type=range], select { width:100%; font-size:1rem; padding:8px; }
-  .row { display:flex; align-items:center; gap:12px; margin-top:16px; background:#1d2328; border:2px solid #2c353c; border-radius:16px; padding:14px; }
-  .row input[type=checkbox] { width:26px; height:26px; flex:none; }
-  .row small { display:block; color:#9aa; font-size:.8rem; }
-  #start { width:100%; padding:20px; font-size:1.3rem; font-weight:bold; border:0; border-radius:16px; background:#2e9e5b; color:#fff; margin-top:20px; }
-  #hint { font-size:.85rem; color:#9aa; margin-top:14px; line-height:1.4; }
-  #stage { position:fixed; inset:0; display:none; z-index:10; }
-  #info { position:absolute; bottom:12px; left:0; right:0; text-align:center; color:rgba(255,255,255,.15); font-size:.8rem; pointer-events:none; }
-  #flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,sans-serif;background:#111;color:#eee;min-height:100vh}
+#menu{padding:20px;max-width:560px;margin:0 auto 40px}
+h1{font-size:1.6rem;margin:0 0 4px}
+p.sub{color:#9aa;margin:0 0 16px}
+.warn{display:none;background:#4a2a1a;border:2px solid #c9682f;border-radius:12px;padding:12px;margin-bottom:14px;font-size:.9rem}
+.card{display:block;width:100%;text-align:left;background:#1d2328;color:#eee;border:2px solid #2c353c;border-radius:16px;padding:16px;margin-bottom:12px;font-size:1.05rem}
+.card small{display:block;color:#9aa;margin-top:4px;font-size:.85rem}
+.card.sel{border-color:#4da3ff;background:#1a2a3a}
+label{display:block;margin:16px 0 6px}
+input[type=range],select{width:100%;font-size:1rem;padding:8px}
+.row{display:flex;align-items:center;gap:12px;margin-top:14px;background:#1d2328;border:2px solid #2c353c;border-radius:16px;padding:14px}
+.row.nb{border:0;padding:8px 0 0;background:none}
+.row input[type=checkbox]{width:26px;height:26px;flex:none}
+small{display:block;color:#9aa;font-size:.8rem;margin-top:2px}
+.box{margin-top:14px;background:#1d2328;border:2px solid #2c353c;border-radius:16px;padding:14px}
+.rechead{margin-top:12px;font-weight:bold;font-size:.9rem}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;font-size:.85rem;border-bottom:1px solid #2c353c}
+.item button{background:#3a2323;color:#fbb;border:0;border-radius:8px;padding:6px 12px;font-size:1rem}
+.btn{display:inline-block;margin:8px 0 0;padding:10px 16px;background:#26415c;border-radius:12px;font-size:.95rem}
+.btn2{width:100%;margin-top:10px;padding:14px;font-size:1rem;border:0;border-radius:12px;background:#3a3f55;color:#fff}
+#sensor{margin-top:12px;padding:10px;border-radius:10px;font-size:.9rem;background:#222}
+#sensor.ok{color:#8fe0a8}#sensor.bad{color:#f5b57a}
+#meter{height:12px;background:#222;border-radius:6px;margin-top:8px;position:relative;overflow:hidden}
+#meter div{height:100%;width:0;background:#4da3ff}
+#meter i{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#fff8}
+#start{width:100%;padding:20px;font-size:1.3rem;font-weight:bold;border:0;border-radius:16px;background:#2e9e5b;color:#fff;margin-top:20px}
+#hint{font-size:.85rem;color:#9aa;margin-top:14px;line-height:1.4}
+#stage{position:fixed;inset:0;display:none;z-index:10;background:#000}
+#info{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:rgba(255,255,255,.18);font-size:.8rem;pointer-events:none}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
 </style>
 </head>
 <body>
 <div id="menu">
-  <h1>🏕️ Camp-Guard</h1>
-  <p class="sub">Wähle ein Szenario. Das Handy simuliert einen bewohnten Camper.</p>
-  <div id="cards"></div>
-  <label>Lautstärke: <span id="volv">30</span>%</label>
-  <input type="range" id="vol" min="5" max="100" value="30">
-  <label>Automatisch beenden nach</label>
-  <select id="timer">
-    <option value="0">Nie (manuell beenden)</option>
-    <option value="60">1 Stunde</option>
-    <option value="120">2 Stunden</option>
-    <option value="240" selected>4 Stunden</option>
-    <option value="480">8 Stunden</option>
-  </select>
-  <div class="row">
-    <input type="checkbox" id="guard" checked>
-    <div><b>Bewegungsalarm</b><small>Bei Erschütterung rufen Stimmen und ein Hund. Das Handy dazu fest ablegen oder anlehnen.</small></div>
-  </div>
-  <label>Empfindlichkeit</label>
-  <select id="sens">
-    <option value="22">Niedrig (nur kräftiges Rütteln)</option>
-    <option value="14" selected>Mittel</option>
-    <option value="8">Hoch (schon leichte Erschütterung)</option>
-  </select>
-  <div class="row">
-    <input type="checkbox" id="alarmLoud">
-    <div><b>Alarm extra laut</b><small>Alarm läuft mit voller Lautstärke, unabhängig vom Regler.</small></div>
-  </div>
-  <button id="start">▶ Start</button>
-  <div id="hint">Tipps: Ladekabel anschließen. Display zur Scheibe drehen. Beenden: Bildschirm 2 Sekunden lang gedrückt halten. Der Bewegungsalarm braucht auf iPhones eine einmalige Erlaubnis beim Start.</div>
+<h1>🏕️ Camp-Guard</h1>
+<p class="sub">Wähle ein Szenario. Das Handy simuliert einen bewohnten Camper.</p>
+<div id="secwarn" class="warn">Diese Seite ist nicht über https geöffnet. Der Bewegungsalarm funktioniert so nicht. Siehe Hosting-Anleitung.</div>
+<div id="cards"></div>
+<label>Lautstärke: <span id="volv">30</span>%</label>
+<input type="range" id="vol" min="5" max="100" value="30">
+<div class="row"><input type="checkbox" id="muffle" checked><div><b>Klang wie von drinnen</b><small>Dämpft Stimmen und Geräusche leicht, als kämen sie aus dem Inneren des Campers.</small></div></div>
+<div class="box">
+<b>Eigene Aufnahmen</b>
+<small>Echte Stimmen klingen am natürlichsten. Nimm mit der Rekorder-App echte, alltägliche Gespräche auf (30 bis 90 Sekunden je Datei). Die Dateien bleiben im Browser gespeichert.</small>
+<div class="rechead">Gespräche und Geräusche</div>
+<div id="listTalk"></div>
+<label class="btn">+ Dateien wählen<input type="file" id="fileTalk" accept="audio/*" multiple hidden></label>
+<div class="rechead">Alarm-Rufe (zum Beispiel „Hallo, wer ist da?“)</div>
+<div id="listAlarm"></div>
+<label class="btn">+ Dateien wählen<input type="file" id="fileAlarm" accept="audio/*" multiple hidden></label>
+<div class="row nb"><input type="checkbox" id="tts" checked><div><b>Handy-Stimmen als Notlösung</b><small>Nur, wenn keine eigenen Aufnahmen vorhanden sind. Klingt künstlich.</small></div></div>
 </div>
-<div id="stage"><div id="flash"></div><div id="info">Zum Beenden lange drücken</div></div>
+<label>Automatisch beenden nach</label>
+<select id="timer"><option value="0">Nie (manuell beenden)</option><option value="60">1 Stunde</option><option value="120">2 Stunden</option><option value="240" selected>4 Stunden</option><option value="480">8 Stunden</option></select>
+<div class="box">
+<div class="row nb" style="padding-top:0"><input type="checkbox" id="guard" checked><div><b>Bewegungsalarm</b><small>Bei Erschütterung bellt ein Hund, das Licht geht an und Stimmen rufen. Handy dazu fest ablegen oder anlehnen.</small></div></div>
+<label>Empfindlichkeit</label>
+<select id="sens"><option value="2.0,90">Niedrig (nur kräftiges Rütteln)</option><option value="0.9,45" selected>Mittel</option><option value="0.4,20">Hoch (schon leichtes Anstoßen)</option></select>
+<div id="sensor" class="bad">Prüfe Sensor ...</div>
+<div id="meter"><div id="meterbar"></div><i></i></div>
+<small>Bewege das Handy: Der Balken zeigt die Stärke. Ab der weißen Linie löst der Alarm aus.</small>
+<div class="row nb"><input type="checkbox" id="alarmLoud"><div><b>Alarm extra laut</b><small>Volle Lautstärke, unabhängig vom Regler.</small></div></div>
+<button class="btn2" id="testAlarm">🔔 Alarm testen</button>
+</div>
+<button id="start">▶ Start</button>
+<div id="hint">Tipps: Ladekabel anschließen. Display zur Scheibe drehen. Beenden: Bildschirm 2 Sekunden lang gedrückt halten. Der Alarm wird 20 Sekunden nach dem Start scharf.</div>
+</div>
+<div id="stage"><div id="flash"></div><div id="info"></div></div>
 
 <script>
-const scenarios = [
- { id:'tv', name:'📺 Fernsehabend', desc:'Flackerndes TV-Licht, Filmgeräusche, Kommentare',
-   light:'tv',
-   lines:[['a','Oh, die Szene ist gut.'],['b','Reich mir mal die Chips rüber.'],['a','Pssst, gleich kommt der Twist.'],['b','Hahaha, das habe ich kommen sehen!'],['a','Mach mal ein bisschen leiser, die Nachbarn.'],['b','Wer ist eigentlich der Typ da?'],['a','Das ist der Bruder von dem anderen.'],['b','Ach so, jetzt verstehe ich es.']] },
- { id:'candle', name:'🕯️ Kerzenlicht-Gespräch', desc:'Warmes, atmendes Licht, leises Gespräch zu zweit',
-   light:'candle',
-   lines:[['a','Weißt du noch, als wir in Portugal waren?'],['b','Klar, der Sturm in der Nacht.'],['a','Das Zelt hat so gewackelt!'],['b','Und wir haben trotzdem Tee gekocht.'],['a','Morgen sollten wir früh los, oder?'],['b','Ja, aber erst Kaffee.'],['a','Noch Wein?'],['b','Gern, ein kleines Glas.']] },
- { id:'book', name:'📖 Hörbuch im Bett', desc:'Dunkles Leselicht, ruhige Geschichte wird erzählt',
-   light:'lamp',
-   lines:[['a','Kapitel drei. Es war ein kalter Morgen, als der alte Fischer sein Boot zum Wasser schob.'],['a','Der Nebel hing tief über dem See, und kein Laut war zu hören außer dem Plätschern der Ruder.'],['a','Er dachte an seine Tochter, die im Frühling heiraten würde.'],['a','Plötzlich zog etwas am Netz, schwer und lebendig.'],['a','Er stemmte sich dagegen, doch das Boot begann sich zu drehen.']] },
- { id:'cards', name:'🃏 Kartenspiel', desc:'Helles Lampenlicht, Spielgeräusche, Lachen',
-   light:'lamp2',
-   lines:[['a','Ich gehe mit.'],['b','Das glaube ich nicht, du bluffst!'],['a','Abwarten. Karten auf den Tisch.'],['b','Oh nein, schon wieder verloren!'],['a','Noch eine Runde?'],['b','Aber diesmal mische ich.'],['a','Du schummelst doch immer.'],['b','Hahaha, gar nicht wahr.']] },
- { id:'night', name:'🔦 Nachtlektüre', desc:'Wanderndes, schwaches Taschenlampenlicht, Flüstern',
-   light:'torch',
-   lines:[['a','Hast du das gehört?'],['b','Nur der Wind, schlaf weiter.'],['a','Wo ist die Wasserflasche?'],['b','Neben dem Rucksack.'],['a','Danke. Gute Nacht.'],['b','Gute Nacht.']] }
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const loadedAt=Date.now();
+if(!window.isSecureContext)$('secwarn').style.display='block';
+
+const scenarios=[
+{id:'tv',name:'📺 Fernsehabend',desc:'Filmschnitte, wechselndes TV-Licht, gedämpfter Ton',light:'tv',murmur:true,events:['rustle','thump','creak','clink'],
+lines:[['a','Oh, die Szene ist gut.'],['b','Reich mir mal die Chips rüber.'],['a','Pssst, gleich kommt der Twist.'],['b','Das habe ich kommen sehen!'],['a','Mach mal ein bisschen leiser.'],['b','Wer ist eigentlich der Typ da?']]},
+{id:'candle',name:'🕯️ Kerzenlicht-Gespräch',desc:'Warmes, unruhiges Kerzenlicht, leises Gespräch',light:'candle',events:['clink','thump','creak','rustle'],
+lines:[['a','Weißt du noch, als wir in Portugal waren?'],['b','Klar, der Sturm in der Nacht.'],['a','Das Zelt hat so gewackelt.'],['b','Und wir haben trotzdem Tee gekocht.'],['a','Noch Wein?'],['b','Gern, ein kleines Glas.']]},
+{id:'book',name:'📖 Hörbuch im Bett',desc:'Dunkles Leselicht, Umblättern, ruhige Geschichte',light:'book',events:['page','creak','rustle'],
+lines:[['a','Es war ein kalter Morgen, als der alte Fischer sein Boot zum Wasser schob.'],['a','Der Nebel hing tief über dem See.'],['a','Er dachte an seine Tochter, die im Frühling heiraten würde.'],['a','Plötzlich zog etwas am Netz, schwer und lebendig.']]},
+{id:'cards',name:'🃏 Kartenspiel',desc:'Helles Lampenlicht, Kartenmischen, Gläser',light:'cards',events:['shuffle','clink','thump','rustle'],
+lines:[['a','Ich gehe mit.'],['b','Das glaube ich nicht, du bluffst.'],['a','Karten auf den Tisch.'],['b','Oh nein, schon wieder verloren.'],['a','Noch eine Runde?'],['b','Aber diesmal mische ich.']]},
+{id:'night',name:'🔦 Nachtlektüre im Zelt',desc:'Taschenlampe geht an und aus, Reißverschluss, Rascheln',light:'torch',events:['rustle','zip','creak'],
+lines:[['a','Hast du das gehört?'],['b','Nur der Wind, schlaf weiter.'],['a','Wo ist die Wasserflasche?'],['b','Neben dem Rucksack.'],['a','Gute Nacht.'],['b','Gute Nacht.']]}
 ];
+const alarmLines=[[['a','Hallo? Wer ist da?']],[['a','Hey! Wer ist da draußen?'],['b','Ich rufe die Polizei!']],[['a','Verschwinden Sie sofort!'],['b','Wir haben Sie gesehen, ich rufe jetzt die Polizei!']]];
 
-// Alarm-Rufe bei Bewegung: Stimmen in Eskalationsstufen
-const alarmLines = [
-  [['a','Hallo? Wer ist da?']],
-  [['a','Hey! Wer ist da draußen?'],['b','Ich rufe die Polizei!']],
-  [['a','Verschwinden Sie sofort!'],['b','Wir haben Sie gesehen, ich rufe jetzt die Polizei!']]
-];
+let selected=scenarios[0],running=false,ctx=null,bus=null,alarmBus=null,muff=null,noiseBuf=null,wake=null,raf=null,timers=[],endAt=0,baseLevel=.3;
+let buffers={talk:[],alarm:[]},alarmActive=false,alarmStage=0,lastAlarm=0,prevAlarm=0,overrideUntil=0,armedAt=0,motionOn=false,touching=false,touchUntil=0;
+const T=(fn,ms)=>{const id=setTimeout(fn,ms);timers.push(id);return id};
 
-let selected = scenarios[0], running = false, wake = null, timers = [], raf = null, audioCtx = null, noiseNode = null, endAt = 0;
-let alarmActive = false, alarmLevel = 0, lastAlarm = 0, motionOn = false, armedAt = 0, baseLevel = 0.3;
-const cards = document.getElementById('cards');
-scenarios.forEach(s => {
-  const b = document.createElement('button');
-  b.className = 'card' + (s === selected ? ' sel' : '');
-  b.innerHTML = s.name + '<small>' + s.desc + '</small>';
-  b.onclick = () => { selected = s; [...cards.children].forEach(c => c.classList.remove('sel')); b.classList.add('sel'); };
-  cards.appendChild(b);
-});
-const vol = document.getElementById('vol');
-vol.oninput = () => document.getElementById('volv').textContent = vol.value;
+const cardsEl=$('cards');
+scenarios.forEach(s=>{const b=document.createElement('button');b.className='card'+(s===selected?' sel':'');b.innerHTML=s.name+'<small>'+s.desc+'</small>';b.onclick=()=>{selected=s;[...cardsEl.children].forEach(c=>c.classList.remove('sel'));b.classList.add('sel')};cardsEl.appendChild(b)});
+$('vol').oninput=()=>$('volv').textContent=$('vol').value;
 
-// Lichtmuster: gibt eine CSS-Farbe pro Zeitpunkt zurück
-function lightColor(kind, t) {
-  const r = Math.random;
-  if (kind === 'tv') {
-    const scene = Math.floor(t / 4000) % 5;
-    const base = [[40,70,140],[120,130,160],[30,40,70],[150,110,80],[60,100,60]][scene];
-    const f = 0.55 + r() * 0.45;
-    return `rgb(${base[0]*f|0},${base[1]*f|0},${base[2]*f|0})`;
-  }
-  if (kind === 'candle') {
-    const f = 0.7 + 0.2 * Math.sin(t / 380) + r() * 0.1;
-    return `rgb(${255*f|0},${140*f|0},${40*f|0})`;
-  }
-  if (kind === 'lamp') {
-    const f = 0.55 + 0.05 * Math.sin(t / 6000);
-    return `rgb(${255*f|0},${200*f|0},${120*f|0})`;
-  }
-  if (kind === 'lamp2') {
-    const f = 0.9 + 0.05 * Math.sin(t / 5000);
-    return `rgb(${255*f|0},${225*f|0},${170*f|0})`;
-  }
-  if (kind === 'torch') {
-    const on = (Math.floor(t / 7000) % 3) !== 2;
-    const f = on ? 0.35 + 0.1 * Math.sin(t / 900) + r() * 0.05 : 0.02;
-    return `rgb(${240*f|0},${240*f|0},${255*f|0})`;
-  }
-  return '#000';
-}
+/* ---------- Aufnahmen speichern (IndexedDB, Notlösung Arbeitsspeicher) ---------- */
+const mem=[];
+const idb={db:null,
+open(){return new Promise((res,rej)=>{if(this.db)return res(this.db);if(!window.indexedDB)return rej();const r=indexedDB.open('campguard',1);r.onupgradeneeded=()=>r.result.createObjectStore('rec',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>{this.db=r.result;res(this.db)};r.onerror=()=>rej(r.error)})},
+async add(cat,name,blob){try{const db=await this.open();return await new Promise(res=>{const q=db.transaction('rec','readwrite').objectStore('rec').add({cat,name,blob});q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})}catch(e){mem.push({id:'m'+mem.length+Date.now(),cat,name,blob});return null}},
+async all(){let out=[];try{const db=await this.open();out=await new Promise(res=>{const q=db.transaction('rec','readonly').objectStore('rec').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])})}catch(e){}return out.concat(mem)},
+async del(id){const i=mem.findIndex(m=>m.id===id);if(i>=0){mem.splice(i,1);return}try{const db=await this.open();db.transaction('rec','readwrite').objectStore('rec').delete(id)}catch(e){}}};
 
-// Leises Hintergrundrauschen (wie ferne Stimmen oder Fernsehton)
-function startNoise(level) {
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const len = audioCtx.sampleRate * 2;
-  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
-  const d = buf.getChannelData(0);
-  let last = 0;
-  for (let i = 0; i < len; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3; }
-  noiseNode = audioCtx.createBufferSource();
-  noiseNode.buffer = buf; noiseNode.loop = true;
-  const g = audioCtx.createGain(); g.gain.value = level * 0.15;
-  noiseNode.connect(g).connect(audioCtx.destination);
-  noiseNode.start();
-}
+async function renderRecs(){
+const all=await idb.all();
+[['talk','listTalk'],['alarm','listAlarm']].forEach(([cat,el])=>{
+const box=$(el);box.innerHTML='';
+const items=all.filter(r=>r.cat===cat);
+if(!items.length){box.innerHTML='<small>Noch keine Dateien.</small>';return}
+items.forEach(r=>{const d=document.createElement('div');d.className='item';const n=document.createElement('span');n.textContent=r.name;const b=document.createElement('button');b.textContent='✕';b.onclick=async()=>{await idb.del(r.id);renderRecs()};d.appendChild(n);d.appendChild(b);box.appendChild(d)})})}
+$('fileTalk').onchange=async e=>{for(const f of e.target.files)await idb.add('talk',f.name,f);e.target.value='';renderRecs()};
+$('fileAlarm').onchange=async e=>{for(const f of e.target.files)await idb.add('alarm',f.name,f);e.target.value='';renderRecs()};
+renderRecs();
 
-function speak(text, who, level, rate, pitchBoost) {
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'de-DE';
-  u.volume = level;
-  u.rate = rate || (0.9 + Math.random() * 0.15);
-  u.pitch = (who === 'a' ? 0.8 : 1.3) + (pitchBoost || 0);
-  const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('de'));
-  if (voices.length) u.voice = voices[who === 'a' ? 0 : Math.min(1, voices.length - 1)];
-  speechSynthesis.speak(u);
-}
+/* ---------- Audio ---------- */
+function makeNoise(sec){const b=ctx.createBuffer(1,ctx.sampleRate*sec,ctx.sampleRate);const d=b.getChannelData(0);let l=0;for(let i=0;i<d.length;i++){const w=Math.random()*2-1;l=l*.97+w*.03;d[i]=(w*.5+l*8)*.5}return b}
+function initAudio(){
+ctx=new (window.AudioContext||window.webkitAudioContext)();
+noiseBuf=makeNoise(3);
+bus=ctx.createGain();bus.gain.value=baseLevel;
+muff=ctx.createBiquadFilter();muff.type='lowpass';muff.frequency.value=$('muffle').checked?2600:20000;
+bus.connect(muff);muff.connect(ctx.destination);
+alarmBus=ctx.createGain();alarmBus.connect(ctx.destination)}
+async function loadBuffers(){
+buffers={talk:[],alarm:[]};
+const all=await idb.all();
+for(const r of all){try{const ab=await r.blob.arrayBuffer();const b=await ctx.decodeAudioData(ab);buffers[r.cat]&&buffers[r.cat].push(b)}catch(e){}}}
+function burst(o){const t=ctx.currentTime+(o.at||0),dur=o.dur||.2;const s=ctx.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=ctx.createBiquadFilter();f.type=o.type||'highpass';f.frequency.value=o.freq||2000;f.Q.value=o.q||.7;const g=ctx.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(o.gain||.3,t+dur*.15);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(g);g.connect(o.out||bus);s.start(t,Math.random()*2);s.stop(t+dur+.05)}
+function tone(o){const t=ctx.currentTime+(o.at||0);const os=ctx.createOscillator();os.type=o.type||'sine';os.frequency.setValueAtTime(o.f0,t);os.frequency.exponentialRampToValueAtTime(o.f1,t+o.dur);const g=ctx.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(o.gain,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+o.dur);let n=os;if(o.lp){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=o.lp;os.connect(f);n=f}n.connect(g);g.connect(o.out||bus);os.start(t);os.stop(t+o.dur+.05)}
+function playBuf(b,out,delay){const s=ctx.createBufferSource();s.buffer=b;s.connect(out);s.start(ctx.currentTime+(delay||0))}
 
-function dialogLoop(s) {
-  if (!running) return;
-  const bookMode = s.id === 'book';
-  let i = bookMode ? 0 : Math.floor(Math.random() * s.lines.length);
-  const next = () => {
-    if (!running) return;
-    if (!alarmActive) {
-      const [who, text] = s.lines[i % s.lines.length];
-      speak(text, who, baseLevel);
-      i = bookMode ? i + 1 : Math.floor(Math.random() * s.lines.length);
-    }
-    const pause = bookMode ? 8000 + Math.random() * 8000 : 6000 + Math.random() * 20000;
-    timers.push(setTimeout(next, pause));
-  };
-  timers.push(setTimeout(next, 3000));
-}
+const FX={
+rustle(){burst({dur:rnd(.3,.8),freq:rnd(1500,3000),gain:rnd(.15,.3)})},
+page(){burst({dur:.35,freq:2500,gain:.25});burst({dur:.15,freq:4000,gain:.15,at:.2})},
+shuffle(){for(let i=0;i<14;i++)burst({dur:.07,freq:rnd(2500,5000),gain:rnd(.1,.25),at:i*rnd(.045,.07)})},
+thump(){tone({f0:140,f1:55,dur:.12,gain:.5});burst({dur:.05,type:'lowpass',freq:800,gain:.3})},
+clink(){const f=rnd(2200,3400);tone({f0:f,f1:f,dur:.5,gain:.12});tone({f0:f*1.52,f1:f*1.52,dur:.35,gain:.07,at:.01})},
+creak(){tone({f0:rnd(70,110),f1:rnd(45,70),dur:rnd(.5,1),gain:.12,type:'sawtooth',lp:350})},
+zip(){const n=Math.round(rnd(14,24));for(let i=0;i<n;i++)burst({dur:.04,freq:2500+i*120,gain:.18,at:i*.045})}
+};
+function startAmbient(s){
+const room=ctx.createBufferSource();room.buffer=noiseBuf;room.loop=true;
+const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=250;
+const rg=ctx.createGain();rg.gain.value=.12;room.connect(lp);lp.connect(rg);rg.connect(bus);room.start();
+if(s.murmur){
+const m=ctx.createBufferSource();m.buffer=noiseBuf;m.loop=true;
+const f1=ctx.createBiquadFilter();f1.type='bandpass';f1.frequency.value=800;f1.Q.value=1.2;
+const f2=ctx.createBiquadFilter();f2.type='bandpass';f2.frequency.value=1900;f2.Q.value=1.2;
+const g=ctx.createGain();g.gain.value=0;m.connect(f1);m.connect(f2);f1.connect(g);f2.connect(g);g.connect(bus);m.start();
+timers.push(setInterval(()=>{if(!running)return;g.gain.setTargetAtTime((Math.random()<.2?0:rnd(.2,1))*.5,ctx.currentTime,.05)},140))}}
+function scheduleEvents(s){const next=()=>{if(!running)return;if(!alarmActive){const e=pick(s.events);FX[e]&&FX[e]()}T(next,rnd(7000,24000))};T(next,rnd(4000,9000))}
 
-// ---------- Bewegungsalarm ----------
+function speak(text,who,level){if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(text);u.lang='de-DE';u.volume=level;u.rate=.88+Math.random()*.12;u.pitch=who==='a'?.8:1.25;const v=speechSynthesis.getVoices().filter(x=>x.lang.startsWith('de'));if(v.length)u.voice=v[who==='a'?0:Math.min(1,v.length-1)];speechSynthesis.speak(u)}
+function talkLoop(s){let i=0;const next=()=>{if(!running)return;let wait=rnd(12000,45000);
+if(!alarmActive){
+if(buffers.talk.length){const b=pick(buffers.talk);playBuf(b,bus,0);wait+=b.duration*1000}
+else if($('tts').checked){const seq=s.id==='book';const l=seq?s.lines[i++%s.lines.length]:pick(s.lines);speak(l[1],l[0],baseLevel);if(seq)wait=rnd(8000,16000)}}
+T(next,wait)};T(next,rnd(3000,7000))}
 
-// Hundebellen per Synthese: kurze, tiefe, raue Impulse
-function bark(level, delay) {
-  if (!audioCtx) return;
-  const t = audioCtx.currentTime + delay;
-  const osc = audioCtx.createOscillator();
-  const osc2 = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  const filt = audioCtx.createBiquadFilter();
-  osc.type = 'sawtooth'; osc2.type = 'square';
-  osc.frequency.setValueAtTime(420, t);
-  osc.frequency.exponentialRampToValueAtTime(190, t + 0.18);
-  osc2.frequency.setValueAtTime(210, t);
-  osc2.frequency.exponentialRampToValueAtTime(95, t + 0.18);
-  filt.type = 'bandpass'; filt.frequency.value = 900; filt.Q.value = 0.8;
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(level, t + 0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
-  osc.connect(filt); osc2.connect(filt); filt.connect(g).connect(audioCtx.destination);
-  osc.start(t); osc2.start(t); osc.stop(t + 0.25); osc2.stop(t + 0.25);
-}
+/* ---------- Alarm ---------- */
+function bark(delay){const lvl=1;tone({f0:420,f1:190,dur:.2,gain:.8*lvl,type:'sawtooth',lp:1400,at:delay,out:alarmBus});tone({f0:210,f1:95,dur:.2,gain:.5*lvl,type:'square',lp:900,at:delay,out:alarmBus});burst({dur:.15,type:'bandpass',freq:1000,q:.8,gain:.3,at:delay,out:alarmBus})}
+function barkSeries(count,start){let d=start||0;for(let i=0;i<count;i++){bark(d);d+=.28+Math.random()*.25}return d}
+function lightFlash(){const f=$('flash');f.style.transition='none';f.style.opacity='.95';requestAnimationFrame(()=>{f.style.transition='opacity 2.5s ease-out';f.style.opacity='0'})}
+function triggerAlarm(manual){
+const now=Date.now();
+if(alarmActive||!ctx)return;
+if(!manual&&(!running||now-lastAlarm<20000))return;
+lastAlarm=now;alarmActive=true;
+alarmStage=(now-prevAlarm<180000)?Math.min(alarmStage+1,2):0;prevAlarm=now;
+const level=$('alarmLoud').checked?1:Math.min(1,baseLevel+.4);
+alarmBus.gain.value=level;
+if(window.speechSynthesis)speechSynthesis.cancel();
+lightFlash();overrideUntil=Date.now()+7000;
+let t=barkSeries(4+alarmStage*2,0)+.6;
+if(buffers.alarm.length){const b=pick(buffers.alarm);playBuf(b,alarmBus,t);t+=b.duration+.5}
+else if($('tts').checked){const ls=alarmLines[alarmStage];ls.forEach((l,i)=>T(()=>speak(l[1],l[0],level),(t+i*3.2)*1000));t+=ls.length*3.2}
+t=barkSeries(3,t);
+T(()=>{alarmActive=false},(t+4)*1000)}
 
-function barkSeries(level, count) {
-  let d = 0;
-  for (let i = 0; i < count; i++) { bark(level, d); d += 0.28 + Math.random() * 0.25; }
-}
+/* ---------- Bewegungssensor ---------- */
+let sensorLast=0,base=null,hits=0,meterVal=0,orient=null,sensorsAttached=false;
+const getThr=()=>{const p=$('sens').value.split(',');return{acc:parseFloat(p[0]),rot:parseFloat(p[1])}};
+function check(accD,rotD){
+const th=getThr();
+meterVal=Math.max(meterVal,Math.max(accD/th.acc,rotD/th.rot)*.5);
+if(!running||!motionOn||touching||Date.now()<armedAt||Date.now()<touchUntil)return;
+if(accD>th.acc||rotD>th.rot){hits++;if(hits>=2){hits=0;triggerAlarm(false)}}else hits=0}
+function onMotion(e){
+const a=e.accelerationIncludingGravity||e.acceleration;
+if(!a||a.x==null)return;
+sensorLast=Date.now();
+const mag=Math.hypot(a.x,a.y,a.z);
+if(base===null)base=mag;
+const d=Math.abs(mag-base);base+=(mag-base)*.05;
+const r=e.rotationRate;const rot=r?Math.abs(r.alpha||0)+Math.abs(r.beta||0)+Math.abs(r.gamma||0):0;
+check(d,rot)}
+function onOrient(e){
+if(Date.now()-sensorLast<2000||e.beta==null)return;
+sensorLast=Date.now()-1500;
+if(!orient)orient=[e.beta,e.gamma];
+const d=Math.abs(e.beta-orient[0])+Math.abs(e.gamma-orient[1]);
+orient[0]+=(e.beta-orient[0])*.05;orient[1]+=(e.gamma-orient[1])*.05;
+check(d/3,0)}
+function attachSensors(){if(sensorsAttached)return;sensorsAttached=true;window.addEventListener('devicemotion',onMotion);window.addEventListener('deviceorientation',onOrient)}
+attachSensors();
+async function askMotionPerm(){try{if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){return (await DeviceMotionEvent.requestPermission())==='granted'}}catch(e){return false}return true}
+setInterval(()=>{
+const st=$('sensor');const ok=sensorLast&&Date.now()-sensorLast<2500;
+if(ok){st.className='ok';st.textContent='Bewegungssensor aktiv ✓'}
+else if(Date.now()-loadedAt>3500){st.className='bad';st.textContent=window.isSecureContext?'Keine Sensordaten. Bewege das Handy oder tippe auf Start und erlaube den Zugriff.':'Keine Sensordaten: Die Seite muss über https geöffnet sein (siehe Anleitung).'}
+meterVal*=.88;
+const w=Math.min(100,meterVal*100);$('meterbar').style.width=w+'%';$('meterbar').style.background=w>=50?'#e5603a':'#4da3ff'},150);
 
-// Kurzer heller Lichtblitz, als ginge die Lampe an
-function lightFlash() {
-  const f = document.getElementById('flash');
-  f.style.transition = 'none'; f.style.opacity = '0.95';
-  requestAnimationFrame(() => { f.style.transition = 'opacity 2.5s ease-out'; f.style.opacity = '0'; });
-}
+/* ---------- Licht ---------- */
+const light={cur:[0,0,0],tvBase:[40,60,120],tvUntil:0,tvB:.8,tvFlash:0,cn:0,cf:0,gust:0,gustAt:0,shAt:0,shEnd:0,sh:0,tOn:false,tUntil:0,tw:0};
+const TV=[[215,205,180],[45,65,130],[150,120,90],[75,115,85],[20,25,45],[175,195,235],[200,140,100],[60,60,70]];
+function lightTV(now,dt){const L=light;
+if(now>L.tvUntil){L.tvBase=pick(TV);L.tvUntil=now+(Math.random()<.3?rnd(700,1800):rnd(2500,9000))}
+L.tvB+=(rnd(.45,1)-L.tvB)*Math.min(1,dt*9);
+if(Math.random()<dt*.15)L.tvFlash=1;
+L.tvFlash=Math.max(0,L.tvFlash-dt*4);
+const b=L.tvB*.75+L.tvFlash*.5,c=L.tvBase;
+return[[c[0]*b,c[1]*b,c[2]*b],18]}
+function lightCandle(now,dt){const L=light;
+L.cn+=(Math.random()-.5)*dt*9;L.cn=Math.max(-1,Math.min(1,L.cn*(1-dt*1.5)));
+L.cf+=(rnd(-1,1)-L.cf)*Math.min(1,dt*14);
+if(now>L.gustAt){L.gust=1;L.gustAt=now+rnd(6000,22000)}
+L.gust=Math.max(0,L.gust-dt*3);
+const b=Math.max(.08,.34+.1*L.cn+.06*L.cf-.16*L.gust);
+return[[255*b,147*b*(.75+.5*b),82*b*b],12]}
+function lightLamp(now,dt,col,b0,depth,dmin,dmax,smin,smax){const L=light;
+if(now>L.shAt){L.shEnd=now+rnd(smin,smax);L.shAt=now+rnd(dmin,dmax)}
+L.sh+=((now<L.shEnd?1:0)-L.sh)*Math.min(1,dt*4);
+const b=b0*(1+.04*Math.sin(now/9000))*(1-depth*L.sh);
+return[[col[0]*b,col[1]*b,col[2]*b],6]}
+function lightTorch(now,dt){const L=light;
+if(now>L.tUntil){L.tOn=!L.tOn;L.tUntil=now+(L.tOn?rnd(7000,16000):rnd(9000,25000))}
+if(!L.tOn)return[[3,3,5],8];
+L.tw+=(rnd(-1,1)-L.tw)*Math.min(1,dt*2.5);
+const b=.3+.12*L.tw+(Math.random()<dt*.5?.2:0);
+return[[235*b,240*b,255*b],10]}
+function lightFor(id,now,dt){
+if(id==='tv')return lightTV(now,dt);
+if(id==='candle')return lightCandle(now,dt);
+if(id==='book')return lightLamp(now,dt,[255,170,90],.5,.35,18000,50000,600,1200);
+if(id==='cards')return lightLamp(now,dt,[255,200,145],.85,.4,8000,25000,1200,2500);
+return lightTorch(now,dt)}
 
-function triggerAlarm() {
-  const now = Date.now();
-  if (!running || alarmActive || now - lastAlarm < 25000) return;
-  lastAlarm = now;
-  alarmActive = true;
-  const loud = document.getElementById('alarmLoud').checked;
-  const level = loud ? 1 : Math.min(1, baseLevel + 0.4);
-  // Stufe steigt bei wiederholter Auslösung innerhalb von 3 Minuten
-  alarmLevel = (now - (triggerAlarm.last || 0) < 180000) ? Math.min(alarmLevel + 1, alarmLines.length - 1) : 0;
-  triggerAlarm.last = now;
-  speechSynthesis.cancel();
-  lightFlash();
-  barkSeries(level, 4 + alarmLevel * 2);
-  const lines = alarmLines[alarmLevel];
-  let delay = 1200;
-  lines.forEach(([who, text]) => {
-    timers.push(setTimeout(() => { if (running) speak(text, who, level, 1.05, 0.1); }, delay));
-    delay += 3200;
-  });
-  timers.push(setTimeout(() => barkSeries(level, 3), delay));
-  timers.push(setTimeout(() => { alarmActive = false; }, delay + 4000));
-}
+/* ---------- Start und Stopp ---------- */
+async function start(){
+if(running)return;
+baseLevel=$('vol').value/100;
+initAudio();
+const perm=await askMotionPerm();if(perm)attachSensors();
+try{await ctx.resume()}catch(e){}
+await loadBuffers();
+running=true;alarmActive=false;lastAlarm=0;prevAlarm=0;alarmStage=0;overrideUntil=0;base=null;hits=0;
+motionOn=$('guard').checked&&perm;
+armedAt=Date.now()+20000;
+const stage=$('stage');stage.style.display='block';$('menu').style.display='none';
+const mins=parseInt($('timer').value);endAt=mins?Date.now()+mins*60000:0;
+$('info').textContent=motionOn?'Bewegungsalarm scharf in 20 Sekunden. Zum Beenden lange drücken.':'Zum Beenden lange drücken';
+T(()=>{$('info').textContent='Zum Beenden lange drücken'},21000);
+try{if(stage.requestFullscreen)await stage.requestFullscreen()}catch(e){}
+try{wake=await navigator.wakeLock.request('screen')}catch(e){}
+startAmbient(selected);scheduleEvents(selected);talkLoop(selected);
+let last=performance.now();
+const frame=now=>{if(!running)return;
+const dt=Math.min(.1,(now-last)/1000);last=now;
+if(endAt&&Date.now()>endAt){stop();return}
+let tgt,rate;
+if(Date.now()<overrideUntil){tgt=[255,235,200];rate=20}else{[tgt,rate]=lightFor(selected.light,now,dt)}
+const k=1-Math.exp(-dt*rate),c=light.cur;
+for(let i=0;i<3;i++)c[i]+=(tgt[i]-c[i])*k;
+stage.style.background='rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';
+raf=requestAnimationFrame(frame)};
+raf=requestAnimationFrame(frame)}
+function stop(){
+running=false;motionOn=false;alarmActive=false;
+timers.forEach(id=>{clearTimeout(id);clearInterval(id)});timers=[];
+cancelAnimationFrame(raf);
+if(window.speechSynthesis)speechSynthesis.cancel();
+try{ctx&&ctx.close()}catch(e){}ctx=null;
+if(wake){try{wake.release()}catch(e){}}
+if(document.fullscreenElement)document.exitFullscreen();
+$('stage').style.display='none';$('menu').style.display='block'}
+document.addEventListener('visibilitychange',async()=>{if(running&&document.visibilityState==='visible'){try{wake=await navigator.wakeLock.request('screen')}catch(e){}}});
+$('start').onclick=start;
 
-function onMotion(e) {
-  if (!running || !motionOn || Date.now() < armedAt) return;
-  const a = e.accelerationIncludingGravity || e.acceleration;
-  if (!a) return;
-  // Abweichung von der Ruhelage (Gravitation ca. 9.8)
-  const mag = Math.sqrt((a.x||0)**2 + (a.y||0)**2 + (a.z||0)**2);
-  onMotion.prev = onMotion.prev ?? mag;
-  const delta = Math.abs(mag - onMotion.prev);
-  onMotion.prev = mag * 0.2 + onMotion.prev * 0.8;
-  const threshold = parseFloat(document.getElementById('sens').value) / 10;
-  if (delta > threshold) triggerAlarm();
-}
+$('testAlarm').onclick=async()=>{
+if(running){triggerAlarm(true);return}
+baseLevel=$('vol').value/100;initAudio();
+try{await ctx.resume()}catch(e){}
+await loadBuffers();
+triggerAlarm(true);
+setTimeout(()=>{if(!running){try{ctx&&ctx.close()}catch(e){}ctx=null;alarmActive=false}},16000)};
 
-async function enableMotion() {
-  if (!document.getElementById('guard').checked) return false;
-  try {
-    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-      const res = await DeviceMotionEvent.requestPermission();
-      if (res !== 'granted') return false;
-    }
-    window.addEventListener('devicemotion', onMotion);
-    return true;
-  } catch (e) { return false; }
-}
-
-async function start() {
-  running = true;
-  baseLevel = vol.value / 100;
-  const stage = document.getElementById('stage');
-  stage.style.display = 'block';
-  document.getElementById('menu').style.display = 'none';
-  const mins = parseInt(document.getElementById('timer').value);
-  endAt = mins ? Date.now() + mins * 60000 : 0;
-  // Bewegungssensor zuerst anfragen (iPhone braucht Fingertipp)
-  motionOn = await enableMotion();
-  // Scharfschaltung nach 20 Sekunden, damit das Ablegen des Handys nicht auslöst
-  armedAt = Date.now() + 20000;
-  onMotion.prev = null; lastAlarm = 0; alarmActive = false;
-  document.getElementById('info').textContent = motionOn
-    ? 'Bewegungsalarm scharf in 20 Sekunden. Zum Beenden lange drücken.'
-    : 'Zum Beenden lange drücken';
-  try { if (stage.requestFullscreen) await stage.requestFullscreen(); } catch (e) {}
-  try { wake = await navigator.wakeLock.request('screen'); } catch (e) {}
-  startNoise(baseLevel);
-  dialogLoop(selected);
-  const t0 = performance.now();
-  let lastUpdate = 0;
-  const frame = (now) => {
-    if (!running) return;
-    if (endAt && Date.now() > endAt) { stop(); return; }
-    const interval = selected.light === 'tv' ? 90 : selected.light === 'candle' ? 120 : 500;
-    if (now - lastUpdate > interval) {
-      stage.style.background = lightColor(selected.light, now - t0);
-      lastUpdate = now;
-    }
-    raf = requestAnimationFrame(frame);
-  };
-  raf = requestAnimationFrame(frame);
-}
-
-function stop() {
-  running = false; motionOn = false; alarmActive = false;
-  window.removeEventListener('devicemotion', onMotion);
-  timers.forEach(clearTimeout); timers = [];
-  cancelAnimationFrame(raf);
-  speechSynthesis.cancel();
-  if (noiseNode) try { noiseNode.stop(); } catch (e) {}
-  if (audioCtx) audioCtx.close();
-  if (wake) wake.release();
-  if (document.fullscreenElement) document.exitFullscreen();
-  document.getElementById('stage').style.display = 'none';
-  document.getElementById('menu').style.display = 'block';
-}
-
-document.getElementById('start').onclick = start;
-
-// Langes Drücken (2 Sekunden) beendet
-let pressTimer;
-const st = document.getElementById('stage');
-const down = () => { pressTimer = setTimeout(stop, 2000); };
-const up = () => clearTimeout(pressTimer);
-st.addEventListener('touchstart', down); st.addEventListener('touchend', up);
-st.addEventListener('mousedown', down); st.addEventListener('mouseup', up);
-
-speechSynthesis.getVoices();
+/* Langes Drücken (2 Sekunden) beendet. Berührung löst keinen Alarm aus. */
+let pressTimer;const st=$('stage');
+const down=()=>{touching=true;pressTimer=setTimeout(stop,2000)};
+const up=()=>{clearTimeout(pressTimer);touching=false;touchUntil=Date.now()+3000};
+st.addEventListener('touchstart',down);st.addEventListener('touchend',up);st.addEventListener('touchcancel',up);
+st.addEventListener('mousedown',down);st.addEventListener('mouseup',up);
+if(window.speechSynthesis)speechSynthesis.getVoices();
 </script>
 </body>
 </html>
